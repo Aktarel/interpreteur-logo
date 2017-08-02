@@ -1,0 +1,176 @@
+PARSER_BEGIN(LogoGram)
+
+package fr.esiea.main.grammaire;
+import java.io.StringReader;
+import java.lang.*;
+
+
+/*
+
+ @Author lebec, ouadah
+ @Since 12/06/2012
+
+*/
+
+
+
+public class LogoGram {
+
+
+
+
+}		
+PARSER_END(LogoGram)
+
+
+TOKEN :
+{
+  <NOMBRE: ( ["0"-"9"] )+ >
+| <MC_REPETE: "REPETE">
+| <MOT: ( ["a"-"z","A"-"Z"] )+ >
+| <LBRACKET: "[">
+| <RBRACKET: "]"> }
+
+
+SKIP :
+{
+  " "
+|  "\t"
+| "\n"
+| "\r"
+}
+
+/*
+ * programme: Repeate
+Repeate: arg [ liste_operation ]
+
+liste_operation: operation liste_operation
+| 
+
+operation: MOT arg_opt
+
+arg_opt: arg
+|
+
+arg: NOMBRE
+
+*/
+
+
+java.util.List<Object> Programme():
+{
+
+	java.util.List<Object> e;
+	java.util.Map<String, Integer> map;
+}
+{
+	
+ 
+  map = ListeVariables() ";" e =  ListeOperation(map) <EOF>
+	{ 
+	  e.add(map);
+	  System.out.println("Mes variables : "+map);
+	  return e; 
+	}
+}
+
+java.util.Map<String, Integer> ListeVariables() :
+{
+	
+	java.util.Map<String,Integer> variables = new java.util.HashMap<String, Integer>();
+	Token t;
+	Token arg;
+}
+{
+	(t=<MOT> "=" arg=<NOMBRE>{
+		variables.put(t.image,Integer.parseInt(arg.image));
+	}
+	)*
+	{return variables;}
+	
+}
+
+java.util.List<Object> ListeOperation(java.util.Map<String, Integer> map) :
+{
+	
+	java.util.List<Object> listeOperation = new java.util.ArrayList<Object>();
+	java.util.List<Object> o;
+	
+	Token t;
+
+	
+
+}
+{
+
+	    ( o = Operation(map){    
+	    	 listeOperation.add(o);
+	    	 //System.out.println("Etat de ma liste d'operation : "+listeOperation.toString());
+	     }
+	    )*
+	    { return listeOperation;}
+
+}
+
+java.util.List<Object> Operation(java.util.Map<String, Integer> map) :
+{
+	java.util.List<Object> listeExpression = new java.util.ArrayList<Object>();
+	java.util.List<Object> listeRepete;
+
+	
+	String o;
+	Token t;
+	Token arg;
+}
+{
+	 
+	
+	<MC_REPETE> o = Arg(map) <LBRACKET> listeRepete=ListeOperation(map) <RBRACKET> {
+		 
+		 listeRepete.add(new OperationLogo("REPETE",Integer.parseInt(o)));
+		 return listeRepete;
+	}
+	|
+	  t = <MOT>
+	  o = ArgOptionnel(map){ 
+			 listeExpression.add(new FonctionLogo(t.image,Integer.parseInt(o)));
+			// System.out.println("Etat de ma liste d'expression : "+listeExpression.toString());
+			 return listeExpression;
+	   }
+	
+	  
+	
+}
+
+
+String ArgOptionnel(java.util.Map<String, Integer> map) :
+{
+	String t;
+
+}
+{
+
+	(t = Arg(map) {
+		return t;
+	}
+	)*
+
+	
+}
+String Arg(java.util.Map<String, Integer> map) :
+{
+	Token t;
+}
+{
+	t = <NOMBRE>{
+		return new String(String.valueOf(t.image));
+	}
+	|
+	":" t = <MOT>{
+		return new String(String.valueOf(map.get(t.image)));
+	}
+	
+
+
+}
+
